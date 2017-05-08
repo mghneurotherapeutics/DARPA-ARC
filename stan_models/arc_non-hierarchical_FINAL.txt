@@ -1,0 +1,77 @@
+data {
+    // Metadata
+    int n_obs;          // observations
+    int n_pred;         // predictors
+    int n_subj;         // subjects
+    int n_miss;         // missing observations
+    int ix[n_obs];      // subject ix
+    int mi[n_obs];      // missing ix
+    
+    // Observations
+    int N[n_obs];                 // choices
+    real Z[n_obs];                // reaction times
+    vector[n_pred] X[n_obs];      // predictors (risk, reward)
+}
+parameters {
+
+    // Subject-level parameters.
+    real<lower=0>      a0[n_subj];
+    real<lower=0>      shape[n_subj];  
+    real<lower=0>      Zm[n_miss];
+    
+    // Group-level parameters.
+    vector[n_pred]     beta_mu;   
+    real<lower=0>      a0_mu;
+    real<lower=0>      a0_sig;
+    real               a1_mu;
+}
+model {
+
+    // Model-generated data
+    real    theta[n_obs];       // likelihood of take
+    real    ddb[n_obs];         // distance from decision boundary
+
+    // Hyperpriors (group-level priors)
+    a0_mu ~ normal(1,2);
+    a0_sig ~ gamma(2,0.5);      // Equivalent to gamma(shape=2,scale=2) 
+    a1_mu ~ normal(0,2);
+    beta_mu ~ student_t(5, 0, 2); 
+    
+    // Priors (subject-level priors)
+    shape ~ gamma(1,0.05);      // Equivalent to gamma(shape=1,scale=20)
+  
+    for (i in 1:n_subj){
+        a0[i] ~ normal(a0_mu, a0_sig); 
+    }
+    
+    // Likelihood
+    for (n in 1:n_obs){
+    
+        // Generate theta/DDB for trial.
+        theta[n] = inv_logit( dot_product( X[n], beta_mu ) );
+        ddb[n] = 0.25 - (theta[n]-0.5)^2;
+        
+        // Model choice data.
+        N[n] ~ bernoulli( theta[n] );
+        
+        // Model reaction time.
+        if (mi[n] == 0){ 
+            Z[n] ~ gamma( shape[ix[n]], shape[ix[n]] / (a0[ix[n]] + a1_mu * ddb[n]) );
+        }
+        else {
+            Zm[mi[n]] ~ gamma( shape[ix[n]], shape[ix[n]] / (a0[ix[n]] + a1_mu * ddb[n]) );
+        }
+    }   
+}
+generated quantities {
+    
+    vector[n_obs] theta; 
+    vector[n_obs] ddb; 
+    vector[n_obs] PointPosteriors; // vector for computing log pointwise predictive density
+    
+    for (n in 1:n_obs){
+        theta[n] = inv_logit( dot_product( X[n], beta_mu ) );
+        ddb[n] = 0.25 - (theta[n]-0.5)^2;
+        PointPosteriors[n] = exp( bernoulli_log( N[n], theta[n] ) );
+    }
+}
