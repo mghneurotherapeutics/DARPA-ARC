@@ -1,0 +1,40 @@
+data {
+
+    // Metadata
+    int N;    // Number of subjects
+    int M;    // Number of nodes
+    int T;    // Number of acquisitions
+
+    // Data
+    vector[M] Y[N,T]; 
+    int nrow[N];
+
+}
+parameters {
+
+    cholesky_factor_corr[M] L_Sigma_mu;
+    cholesky_factor_corr[M] L_Sigma[N];  
+    
+}
+model {
+
+    // Priors
+    L_Sigma_mu ~ lkj_corr_cholesky(1);
+    for (n in 1:N){
+        L_Sigma[n] ~ lkj_corr_cholesky(50);
+    }
+
+    // Likelihood
+    for (n in 1:N){ 
+        Y[n,1:nrow[n]] ~ multi_normal(rep_vector(0.,M), multiply_lower_tri_self_transpose(L_Sigma_mu) + 
+                                                        multiply_lower_tri_self_transpose(L_Sigma[n]) +
+                                                        diag_matrix(rep_vector(-1., M)));
+    }
+
+}
+generated quantities {
+
+    cov_matrix[M] Sigma_mu;
+    Sigma_mu = multiply_lower_tri_self_transpose(L_Sigma_mu);
+    
+}
