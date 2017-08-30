@@ -1,1 +1,1 @@
-Code for the upcoming publication to JNeurosci for ARC slow-event related study.
+Code for the ARC manuscript submitted to and summarily rejected by the Journal of Neuroscience. Archived for historical purposes.
