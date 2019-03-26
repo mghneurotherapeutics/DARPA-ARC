@@ -1,0 +1,12 @@
+## Numerical computing libraries
+numpy
+scipy
+pandas
+
+## Probabilistic programming libraries
+pystan==2.15.0.1
+stantools     # https://github.com/szorowi1/stantools
+
+## Visualization libraries
+matplotlib
+seaborn
