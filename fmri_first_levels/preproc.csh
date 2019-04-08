@@ -1,8 +1,10 @@
+#!/bin/csh
+
 ## Source Freesufer.
 source /usr/local/freesurfer/nmr-stable53-env
 setenv SUBJECTS_DIR /autofs/space/lilli_001/users/DARPA-Recons/
 set ROOT_DIR = /autofs/space/lilli_002/users/DARPA-ARC
-set SCRIPTS_DIR = $ROOT_DIR/NN_bayes_2016/scripts
+set SCRIPTS_DIR = $ROOT_DIR/scripts
 
 ## Specify parameters.
 set SUBJECTS = (hc002)
@@ -14,7 +16,7 @@ cd $ROOT_DIR
 foreach SUBJECT ($SUBJECTS)
 
   ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
-  ## Convert f.niii
+  ## Convert f.nii
   ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
   set FN = $ROOT_DIR/$SUBJECT/arc_001/001/f.nii
   set INFO = `mri_info $FN --tr`

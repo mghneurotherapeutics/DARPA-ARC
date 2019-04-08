@@ -1,12 +1,15 @@
+#!/bin/csh
+
 ## Configure an Analysis
-set ROOT_DIR = /autofs/space/lilli_002/users/DARPA-ARC/NN_bayes_2016/FINAL6
-set CONTRASTS = (Delib DelibMod)
+set version = Version20190405
+set ROOT_DIR = /autofs/space/karima_001/users/DARPA-ARC/$version
+set CONTRASTS = (Delib DelibMod Risk Reward)
 
 foreach CONTRAST ($CONTRASTS)
 
   foreach SPACE (lh rh)
 
-      set DATA_DIR = $ROOT_DIR/FINAL.6.0.9.$SPACE/FINAL.$CONTRAST.par
+      set DATA_DIR = $ROOT_DIR/$version.6.0.9.$SPACE/$version.$CONTRAST.par
 
       mri_glmfit \
         --y $DATA_DIR/ces.nii.gz \
@@ -19,7 +22,7 @@ foreach CONTRAST ($CONTRASTS)
   end    
 
 
-  set DATA_DIR = $ROOT_DIR/FINAL.6.0.9.mni305/FINAL.$CONTRAST.par
+  set DATA_DIR = $ROOT_DIR/$version.6.0.9.mni305/$version.$CONTRAST.par
 
   mri_glmfit \
     --y $DATA_DIR/ces.nii.gz \

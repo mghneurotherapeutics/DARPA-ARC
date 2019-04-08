@@ -1,9 +1,13 @@
+#!/bin/csh
+
 set FWHM = 6
 set TR = 1.75
 set FDs = (0.0 0.5 0.7 0.9 1.1 1.3)
 set fsd = arc_001
+set version = Version20190405
+set HOME_DIR = `pwd`
 
-cd /autofs/space/lilli_002/users/JNeurosci_ARC/fmri_first_levels
+cd /autofs/space/karima_001/users/JNeurosci_ARC/fmri_first_levels
 
 foreach FD ($FDs)
 foreach SPACE (lh rh)
@@ -12,13 +16,12 @@ mkanalysis-sess \
   -surface fsaverage $SPACE \
   -fwhm $FWHM \
   -notask \
-  -taskreg FINAL2.Delib.par 1 \
-  -taskreg FINAL2.DelibMod.par 1 \
-  -taskreg FINAL2.Antcp.par 1 \
-  -taskreg FINAL2.AntcpMod.par 1 \
-  -taskreg FINAL2.Shock.par 1 \
-  -nuisreg FINAL2.mc.par -1 \
-  -tpexclude FINAL2.censor.$FD.par \
+  -taskreg $version.Delib.par 1 \
+  -taskreg $version.DelibMod.par 1 \
+  -taskreg $version.Risk.par 1 \
+  -taskreg $version.Reward.par 1 \
+  -nuisreg $version.mc.par -1 \
+  -tpexclude $version.censor.$FD.par \
   -hpf 0.01 \
   -nskip 4 \
   -spmhrf 0 \
@@ -26,7 +29,7 @@ mkanalysis-sess \
   -fsd $fsd \
   -per-run \
   -b0dc  \
-  -analysis FINAL2.$FWHM.$FD.$SPACE
+  -analysis $version.$FWHM.$FD.$SPACE
 
 end
 
@@ -34,13 +37,12 @@ mkanalysis-sess \
   -mni305 2 \
   -fwhm $FWHM \
   -notask \
-  -taskreg FINAL2.Delib.par 1 \
-  -taskreg FINAL2.DelibMod.par 1 \
-  -taskreg FINAL2.Antcp.par 1 \
-  -taskreg FINAL2.AntcpMod.par 1 \
-  -taskreg FINAL2.Shock.par 1 \
-  -nuisreg FINAL2.mc.par -1 \
-  -tpexclude FINAL2.censor.$FD.par \
+  -taskreg $version.Delib.par 1 \
+  -taskreg $version.DelibMod.par 1 \
+  -taskreg $version.Risk.par 1 \
+  -taskreg $version.Reward.par 1 \
+  -nuisreg $version.mc.par -1 \
+  -tpexclude $version.censor.$FD.par \
   -hpf 0.01 \
   -nskip 4 \
   -spmhrf 0 \
@@ -48,8 +50,8 @@ mkanalysis-sess \
   -fsd $fsd \
   -per-run \
   -b0dc  \
-  -analysis FINAL2.$FWHM.$FD.mni305
+  -analysis $version.$FWHM.$FD.mni305
 
 end
 
-cd /autofs/space/lilli_002/users/JNeurosci_ARC/fmri_first_levels/NN_bayes_2016/scripts
+cd $HOME_DIR
