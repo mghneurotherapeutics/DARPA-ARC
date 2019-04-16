@@ -1,15 +1,15 @@
 #!/bin/csh
 
 ## Configure an Analysis
-set version = Version20190405
-set ROOT_DIR = /autofs/space/karima_001/users/DARPA-ARC/$version
-set CONTRASTS = (Delib DelibMod Risk Reward)
+set VERSION = Version20190405
+set ROOT_DIR = /autofs/space/lilli_002/users/JNeurosci_ARC/fmri_first_levels/concat-sess/$VERSION
+set CONTRASTS = (Delib DelibMod FixedEpochs Risk Reward)
 
 foreach CONTRAST ($CONTRASTS)
 
   foreach SPACE (lh rh)
 
-      set DATA_DIR = $ROOT_DIR/$version.6.0.9.$SPACE/$version.$CONTRAST.par
+      set DATA_DIR = $ROOT_DIR/$VERSION.6.0.9.$SPACE/$VERSION.$CONTRAST.par
 
       mri_glmfit \
         --y $DATA_DIR/ces.nii.gz \
@@ -22,7 +22,7 @@ foreach CONTRAST ($CONTRASTS)
   end    
 
 
-  set DATA_DIR = $ROOT_DIR/$version.6.0.9.mni305/$version.$CONTRAST.par
+  set DATA_DIR = $ROOT_DIR/$VERSION.6.0.9.mni305/$VERSION.$CONTRAST.par
 
   mri_glmfit \
     --y $DATA_DIR/ces.nii.gz \

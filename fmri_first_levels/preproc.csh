@@ -4,12 +4,13 @@
 source /usr/local/freesurfer/nmr-stable53-env
 setenv SUBJECTS_DIR /autofs/space/lilli_001/users/DARPA-Recons/
 set ROOT_DIR = /autofs/space/lilli_002/users/DARPA-ARC
-set SCRIPTS_DIR = $ROOT_DIR/scripts
+set HOME_DIR = `pwd`
 
 ## Specify parameters.
-set SUBJECTS = (hc002)
+set SUBJECTS = ( `cat $ROOT_DIR/scripts/sessid` )
 set FWHM = 6
 set TR = 1750
+set TASK = arc
 
 cd $ROOT_DIR
 
@@ -18,7 +19,7 @@ foreach SUBJECT ($SUBJECTS)
   ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
   ## Convert f.nii
   ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
-  set FN = $ROOT_DIR/$SUBJECT/arc_001/001/f.nii
+  set FN = $ROOT_DIR/$SUBJECT/{$TASK}_001/001/f.nii
   set INFO = `mri_info $FN --tr`
   if !($INFO == $TR) then
     mri_convert $FN $FN -tr $TR
@@ -48,8 +49,8 @@ foreach SUBJECT ($SUBJECTS)
 
   ## Source current version of FSL. 
   set FSL_DIR = /usr/pubsw/packages/fsl/current
-  preproc-sess -s $SUBJECT -surface fsaverage lhrh -mni305 -fwhm $FWHM -per-run -fsd arc_001 -nostc -b0dc -force
+  preproc-sess -s $SUBJECT -surface fsaverage lhrh -mni305 -fwhm $FWHM -per-run -fsd {$TASK}_001 -nostc -b0dc -force
 
 end
 
-cd $SCRIPTS_DIR
+cd $HOME_DIR
