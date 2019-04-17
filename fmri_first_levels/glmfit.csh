@@ -1,15 +1,20 @@
 #!/bin/csh
 
 ## Configure an Analysis
-set VERSION = Version20190405
-set ROOT_DIR = /autofs/space/lilli_002/users/JNeurosci_ARC/fmri_first_levels/concat-sess/$VERSION
-set CONTRASTS = (Delib DelibMod FixedEpochs Risk Reward)
+set HOME_DIR = `pwd`
+set TASK = `cat {$HOME_DIR}/../params/TASK.txt`
+set VERSION = `cat {$HOME_DIR}/../params/VERSION.txt`
+set ROOT_DIR = `cat {$HOME_DIR}/../params/ROOT_DIR.txt`
+set CONCAT_SESS_DIR = $ROOT_DIR/fmri_first_levels/concat-sess/$VERSION
+set CONDITIONS = ( `cat {$HOME_DIR}/../params/CONDITIONS.txt` )
+set FWHM = `cat {$HOME_DIR}/../params/FWHM.txt`
+set FD = `cat {$HOME_DIR}/../params/FD.txt`
 
-foreach CONTRAST ($CONTRASTS)
+foreach CONDITION ($CONDITIONS)
 
   foreach SPACE (lh rh)
 
-      set DATA_DIR = $ROOT_DIR/$VERSION.6.0.9.$SPACE/$VERSION.$CONTRAST.par
+      set DATA_DIR = $ROOT_DIR/$TASK.$MODEL.$VERSION.$FWHM.$FD.$SPACE/$TASK.$MODEL.$VERSION.$CONDITION.par
 
       mri_glmfit \
         --y $DATA_DIR/ces.nii.gz \
@@ -22,7 +27,7 @@ foreach CONTRAST ($CONTRASTS)
   end    
 
 
-  set DATA_DIR = $ROOT_DIR/$VERSION.6.0.9.mni305/$VERSION.$CONTRAST.par
+  set DATA_DIR = $ROOT_DIR/$TASK.$MODEL.$VERSION.$FWHM.$FD.mni305/$TASK.$MODEL.$VERSION.$CONDITION.par
 
   mri_glmfit \
     --y $DATA_DIR/ces.nii.gz \

@@ -1,20 +1,27 @@
 #!/bin/csh
 
-set CONTRASTS = (Delib DelibMod FixedEpochs Risk Reward)
-set SPACES = (mni305 lh rh)
-set PERM = ( `cat /autofs/space/lilli_002/users/JNeurosci_ARC/fmri_second_levels/permutations.txt`)
+set HOME_DIR = `pwd`
+set ROOT_DIR = `cat {$HOME_DIR}/../params/ROOT_DIR.txt`
+set SPACES = ( `cat {$HOME_DIR}/../params/SPACES.txt` )
+set MODEL_NAMES = ( `cat {$HOME_DIR}/../params/MODEL_NAMES.txt` )
+set CONDITIONS = ( `cat {$HOME_DIR}/../params/CONDITIONS.txt` )
+set PERM = ( `cat $ROOT_DIR/fmri_second_levels/permutations.txt`)
 
 source /usr/local/freesurfer/nmr-stable53-env
 
-foreach CONTRAST ($CONTRASTS)
+foreach MODEL_NAME ($MODEL_NAMES)
 
-  foreach SPACE ($SPACES)
+  foreach CONTRAST ($CONTRASTS)
 
-    foreach P ($PERM)
+    foreach SPACE ($SPACES)
 
-        pbsubmit -m arockhill@mgh.harvard.edu -c "python wls_perm.py $SPACE $CONTRAST $P"
+      foreach P ($PERM)
 
-    end
+          pbsubmit -m arockhill@mgh.harvard.edu -c "python wls_perm.py $MODEL_NAME $SPACE $CONTRAST $P"
+
+      end
+
+   end
 
   end
 
