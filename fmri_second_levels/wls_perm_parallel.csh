@@ -6,6 +6,8 @@ set SPACES = ( `cat {$HOME_DIR}/../params/SPACES.txt` )
 set MODELS = ( `cat {$HOME_DIR}/../params/MODELS.txt` )
 set PERM = ( `cat $ROOT_DIR/fmri_second_levels/permutations.txt`)
 
+@ i = 1
+
 source /usr/local/freesurfer/nmr-stable53-env
 
 foreach MODEL ($MODELS)
@@ -18,7 +20,18 @@ foreach MODEL ($MODELS)
 
       foreach P ($PERM)
 
-          pbsubmit -m arockhill@mgh.harvard.edu -c "python wls_perm.py $SPACE $REGRESSOR $P 0" # -q max500
+          python wls_perm.py $SPACE $REGRESSOR $P 0 &
+
+          @ i += 1
+
+          echo $i
+
+          if ( $i == ( `nproc` - 4)) then
+              
+              wait
+              @ i = 1
+
+          endif
 
       end
 

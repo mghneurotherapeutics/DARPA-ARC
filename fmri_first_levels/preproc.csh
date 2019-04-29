@@ -30,6 +30,8 @@ setenv SUBJECTS_DIR $SUBJECTS_DIR
 ## Specify parameters.
 set SUBJECTS = ( `tail -n +2 $MRI_DIR/participants.tsv` )
 
+echo $SUBJECTS >> $ROOT_DIR/sessid
+
 cd $ROOT_DIR
 
 foreach SUBJECT ($SUBJECTS)

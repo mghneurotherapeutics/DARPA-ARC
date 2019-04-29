@@ -7,6 +7,8 @@ from pylab import plt
 import pickle
 import nibabel as nib
 
+### NOTE: VARIABLES CHANGED WILL NOT AUTOMATICALLY BE UPDATED IN PARAM DIRECTORY TEXT FILES FOR SHELL COMMANDS. OKAY TO DELETE THE PARAM FOLDER IN CASE OF CHANGE OF VARIABLES, IT WILL BE REGENERATED. ###
+
 def param_to_text(name, param):
     name = name.upper()
     param_dir = './params'
@@ -24,11 +26,32 @@ def param_to_text(name, param):
                     f.write(str(p) + '\n')
         else:
             f.write(str(param))
+            
+def regressors_to_text(version, models, conditions_dict):
+    param_dir = './params'
+    for model_name, analysis, epochs_type in models:
+        fname = op.join(param_dir, '%s.%s.%s.REGRESSORS.txt' % (model_name, analysis, epochs_type))
+        fname2 = op.join(param_dir, '%s.%s.%s.REGRESSOR_TEXT.txt' % (model_name, analysis, epochs_type))
+        if op.isfile(fname) and op.isfile(fname2):
+            return
+        if not op.isdir(param_dir):
+            os.makedirs(param_dir)
+        regressors = conditions_dict[analysis]
+        with open(fname, 'w') as f:
+            f.write('%s.%s.%s.%s.Control.par\n' % (version, model_name, analysis, epochs_type))
+            for reg in regressors:
+                f.write('%s.%s.%s.%s.%s.par\n' % (version, model_name, analysis, epochs_type, reg)) 
+        with open(fname2, 'w') as f:
+            f.write('-taskreg %s.%s.%s.%s.Control.par 1 ' % (version, model_name, analysis, epochs_type))
+            for reg in regressors:
+                f.write('-taskreg %s.%s.%s.%s.%s.par 1 ' % (version, model_name, analysis, epochs_type, reg))    
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Define parameters.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+version = 'Version20190416'
+param_to_text('version', version)
 task = 'arc'
 param_to_text('task', task)
 paradigm = 'ser'  # Slow, event-related
@@ -42,7 +65,13 @@ stan_models = ['hierarchical', 'non-hierarchical']
 models = [('hierarchical', 'DelibMod', 'VariableEpochs'), ('non-hierarchical', 'DelibMod', 'VariableEpochs'),
           ('hierarchical', 'DelibMod', 'FixedEpochs'), ('non-hierarchical', 'DelibMod', 'FixedEpochs'),
           ('parameter', 'Risk', 'VariableEpochs'), ('parameter', 'Reward', 'VariableEpochs'),
-          ('parameter', 'Risk', 'FixedEpochs'), ('parameter', 'Reward', 'FixedEpochs')]
+          ('parameter', 'Risk', 'FixedEpochs'), ('parameter', 'Reward', 'FixedEpochs'),
+          ('hierarchical', 'All', 'VariableEpochs'),('hierarchical', 'All', 'FixedEpochs'),
+          ('non-hierarchical', 'All', 'VariableEpochs'),('non-hierarchical', 'All', 'FixedEpochs'),
+          ('hierarchical', 'PCA', 'VariableEpochs')] 
+conditions_dict = {'DelibMod': ['DDB'], 'Risk': ['Risk'], 'Reward': ['Reward'], 'All': ['DDB', 'Risk', 'Reward'],
+                   'PCA': ['DDB', 'Risk', 'Reward']}
+regressors_to_text(version, models, conditions_dict)
 param_to_text('models', models)
 sm = 6
 param_to_text('fwhm', sm)
@@ -50,8 +79,6 @@ thresholds = [0.0, 0.5, 0.7, 0.9, 1.1, 1.3]
 param_to_text('thresholds', thresholds)
 spaces = ['lh','rh','mni305']
 param_to_text('spaces', spaces)
-version = 'Version20190416'
-param_to_text('version', version)
 choice_time = 3.5  # how long subject had to choose including 0.5 risk presentation when no choice is able
 n_acq = 977
 tr = 1.75

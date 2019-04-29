@@ -4,23 +4,36 @@ set HOME_DIR=`pwd`
 set FWHM = `cat {$HOME_DIR}/../params/FWHM.txt`
 set TASK = `cat {$HOME_DIR}/../params/TASK.txt`
 set TR = `cat {$HOME_DIR}/../params/TR.txt`
-set VERSION = `cat {$HOME_DIR}/../params/VERSION.txt`
+set MY_VERSION = `cat {$HOME_DIR}/../params/VERSION.txt`
 set ROOT_DIR = `cat {$HOME_DIR}/../params/ROOT_DIR.txt`
+set FS_SOURCE_DIR = `cat {$HOME_DIR}/../params/FS_SOURCE_DIR.txt`
 
-cd $ROOT_DIR
+if ("$1" == "-check_threshs") then
+  set THRESHOLDS = ( `cat {$HOME_DIR}/../params/THRESHOLDS.txt` )
+  set MODELS = ( `head -1 {$HOME_DIR}/../params/MODELS.txt` )
+else
+  set THRESHOLDS = ( `cat {$HOME_DIR}/../params/FD.txt` )
+  set MODELS = ( `cat {$HOME_DIR}/../params/MODELS.txt` )
+endif
 
-foreach MODEL ( `cat {$HOME_DIR}/../params/MODELS.txt` )
-foreach FD ( `cat {$HOME_DIR}/../params/THRESHOLDS.txt` )
+source $FS_SOURCE_DIR
+
+cd $ROOT_DIR/fmri_first_levels
+
+mkdir -p mkanalysis-sess
+
+foreach MODEL ($MODELS)
+set REGRESSOR_TEXT = `cat {$HOME_DIR}/../params/$MODEL.REGRESSOR_TEXT.txt`
+foreach FD ($THRESHOLDS)
 foreach SPACE ( lh rh )
 
 mkanalysis-sess \
   -surface fsaverage $SPACE \
   -fwhm $FWHM \
   -notask \
-  -taskreg $VERSION.$MODEL.Control.par 1 \
-  -taskreg $VERSION.$MODEL.par 1 \
-  -nuisreg $VERSION.mc.par -1 \
-  -tpexclude $VERSION.censor.$FD.par \
+  $REGRESSOR_TEXT \
+  -nuisreg $MY_VERSION.mc.par -1 \
+  -tpexclude $MY_VERSION.censor.$FD.par \
   -hpf 0.01 \
   -nskip 4 \
   -spmhrf 0 \
@@ -28,7 +41,7 @@ mkanalysis-sess \
   -fsd {$TASK}_001 \
   -per-run \
   -b0dc  \
-  -analysis $VERSION.$TASK.$MODEL.$FWHM.$FD.$SPACE \
+  -analysis $MY_VERSION.$TASK.$MODEL.$FWHM.$FD.$SPACE \
   -force
 
 end
@@ -37,10 +50,9 @@ mkanalysis-sess \
   -mni305 2 \
   -fwhm $FWHM \
   -notask \
-  -taskreg $VERSION.$MODEL.Control.par 1 \
-  -taskreg $VERSION.$MODEL.par 1 \
-  -nuisreg $VERSION.mc.par -1 \
-  -tpexclude $VERSION.censor.$FD.par \
+  $REGRESSOR_TEXT \
+  -nuisreg $MY_VERSION.mc.par -1 \
+  -tpexclude $MY_VERSION.censor.$FD.par \
   -hpf 0.01 \
   -nskip 4 \
   -spmhrf 0 \
@@ -48,7 +60,7 @@ mkanalysis-sess \
   -fsd {$TASK}_001 \
   -per-run \
   -b0dc  \
-  -analysis $VERSION.$TASK.$MODEL.$FWHM.$FD.$SPACE.mni305 \
+  -analysis $MY_VERSION.$TASK.$MODEL.$FWHM.$FD.mni305 \
   -force
 
 end

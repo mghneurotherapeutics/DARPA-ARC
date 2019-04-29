@@ -1,0 +1,1 @@
+-taskreg Version20190416.hierarchical.PCA.VariableEpochs.Control.par 1 -taskreg Version20190416.hierarchical.PCA.VariableEpochs.DDB.par 1 -taskreg Version20190416.hierarchical.PCA.VariableEpochs.Risk.par 1 -taskreg Version20190416.hierarchical.PCA.VariableEpochs.Reward.par 1 

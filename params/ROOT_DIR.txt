@@ -1,1 +1,1 @@
-/autofs/space/lilli_002/users/JNeurosci_ARC/fmri_first_levels
+/autofs/space/lilli_002/users/JNeurosci_ARC/

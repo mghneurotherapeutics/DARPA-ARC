@@ -2,23 +2,24 @@ import sys
 sys.path.append('..')
 from my_settings import (os, op, np, version, read_csv, root_dir,
                          sm, fd, X, n_subj, n_pred, prepare_image,
-                         load_sparse_coo, wls)
+                         load_sparse_coo, wls, task, n_permutations, inc)
 from scipy.sparse import coo_matrix
 from mne.stats.cluster_level import _find_clusters as find_clusters
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Define parameters.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-'''Input from cmdline: Model_Name Space Condition Permutations'''
+'''Input from cmdline: Space Regressor Permutations'''
 args = sys.argv[1:]
 
 ## I/O parameters.
-model_name = args[0]
-space = args[1]
-condition = args[2]
+space = args[0]
+version, model_name, analysis, epochs_type, condition, par = args[1].split('.')
 
 ## Permutation parameters.
-permutations = int(args[3])
+permutations = int(args[2])
+
+overwrite = bool(int(args[3]))
 
 ## TFCE parameters.
 threshold = dict(start=0.1, step=0.1, h_power=2, e_power=0.5)
@@ -29,16 +30,33 @@ max_step = 1
 ### Load and prepare data.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-out_dir = op.join(root_dir, 'fmri_second_levels', 
-    '%s.%s.%s.%s.%s.%s.%s.%s' % (version, task, model_name, condition, epochs_type, sm, fd, space))
+out_dir = op.join(root_dir, 'fmri_second_levels', ('%s.%s.%s.%s.%s.%s.%s.%s.%s' % 
+                                                   (version, task, model_name, 
+                                                    analysis, epochs_type,
+                                                    sm, fd, space, condition)))
+
+## Out file
+if permutations: 
+    out_f = op.join(out_dir, ('%s.%s.%s.%s.%s.%s.%s.%s.%s_perm-%s' % 
+                              (version, task, model_name, analysis,
+                               epochs_type, sm, fd, space,
+                               condition, permutations)))
+else:
+    out_f = op.join(out_dir, ('%s.%s.%s.%s.%s.%s.%s.%s.%s_obs' % 
+                              (version, task, model_name, analysis,
+                               epochs_type, sm, fd, space, condition)))
+
+if op.isfile(out_f + '.npz') and not overwrite:
+    print(('WLS already computed for %s' % out_f))
+    exit()
 
 ## Load data.
-npz = np.load(os.path.join(out_dir, 'first_levels.npz'))
+npz = np.load(op.join(out_dir, 'first_levels.npz'))
 ces = npz['ces']
 cesvar = np.abs( 1. / npz['cesvar'] )
 
 ## Define indices.
-connectivity = load_sparse_coo(os.path.join(root_dir, 'fmri_second_levels',
+connectivity = load_sparse_coo(op.join(root_dir, 'fmri_second_levels',
                                '%s_%s_connectivity.npz' % (version, space)))
 index,  = np.where(~np.isinf(cesvar).sum(axis=1).astype(bool))
 include = ~np.isinf(cesvar).sum(axis=1).astype(bool)
@@ -49,9 +67,9 @@ include = ~np.isinf(cesvar).sum(axis=1).astype(bool)
 
 ## If specified, load precomputed sign flips.
 if permutations: 
-    sign_flips = np.load(os.path.join(root_dir, 'fmri_second_levels', 
-                                      'permutations',
-                                      '%s_sign_flips_%s.npy' % (version, permutations)))
+    sign_flips = np.load(op.join(root_dir, 'fmri_second_levels', 
+                                 'permutations',
+                                 '%s_sign_flips_%s.npy' % (version, permutations)))
 else: 
     sign_flips = np.ones((1,n_subj))
 n_shuffles = sign_flips.shape[0]
@@ -67,6 +85,8 @@ Fmap = np.zeros(shape)
 
 ## Loop it!
 for n, sf in enumerate(sign_flips):
+    #
+    print(n)
     #
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
     ### Compute statistics.
@@ -98,16 +118,8 @@ for n, sf in enumerate(sign_flips):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Save results.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#  
-        
-if permutations: 
-    f = op.join(out_dir, ('%s.%s.%s.%s.%s.%s.%s.%s_perm-%s' % 
-                          (version, task, model_name, condition,
-                           epochs_type, sm, fd, space, permutations)))
-else:
-    f = op.join(out_dir, ('%s.%s.%s.%s.%s.%s.%s.%s_obs' % 
-                          (version, task, model_name, condition,
-                           epochs_type, sm, fd, space)))
-np.savez_compressed(f, Bmap=Bmap, Fmap=Fmap)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~# 
+print(out_f)
+np.savez_compressed(out_f, Bmap=Bmap, Fmap=Fmap)
     
 print('Done.')

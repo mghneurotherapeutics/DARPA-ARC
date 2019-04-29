@@ -6,3 +6,7 @@ parameter.Risk.VariableEpochs
 parameter.Reward.VariableEpochs
 parameter.Risk.FixedEpochs
 parameter.Reward.FixedEpochs
+hierarchical.All.VariableEpochs
+hierarchical.All.FixedEpochs
+non-hierarchical.All.VariableEpochs
+non-hierarchical.All.FixedEpochs
