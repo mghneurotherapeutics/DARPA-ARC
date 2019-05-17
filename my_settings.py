@@ -6,6 +6,7 @@ from pandas import DataFrame, read_csv
 from pylab import plt
 import pickle
 import nibabel as nib
+from PIL import Image, ImageChops
 
 ### NOTE: VARIABLES CHANGED WILL NOT AUTOMATICALLY BE UPDATED IN PARAM DIRECTORY TEXT FILES FOR SHELL COMMANDS. OKAY TO DELETE THE PARAM FOLDER IN CASE OF CHANGE OF VARIABLES, IT WILL BE REGENERATED. ###
 
@@ -89,7 +90,7 @@ fd = 0.9  # The chosen framewise displasemnt, if changed delete FD.txt param fil
 param_to_text('FD', fd)
 n_permutations = 5000
 inc = 100
-psc_threshold = 1.301
+psc_threshold = 0.05
 overlay = 'psc'
 surface = 'inflated'
 
@@ -157,11 +158,11 @@ def prepare_image(arr, space):
     npz = np.load(op.join(root_dir, 'fmri_second_levels/%s_%s_connectivity.npz' % (version, space)))
     image = np.zeros_like(npz['mapping'], dtype=float)
     #
-    if not space == 'mni305': 
-        image[npz['vertices']] += arr
-    else:
+    if space == 'mni305': 
         x,y,z = npz['voxels'].T
         image[x,y,z] += arr
+    else:
+        image[npz['vertices']] += arr
     #
     for _ in range(4 - len(image.shape)): image = np.expand_dims(image,-1)
     return image
