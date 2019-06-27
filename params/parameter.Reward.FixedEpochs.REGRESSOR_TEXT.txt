@@ -1,0 +1,1 @@
+-taskreg Version20190416.parameter.Reward.FixedEpochs.Control.par 1 -taskreg Version20190416.parameter.Reward.FixedEpochs.Reward.par 1 

@@ -83,6 +83,6 @@ generated quantities {
     for (n in 1:n_obs){
         theta[n] = inv_logit( dot_product( X[n], beta[ix[n]] ) );
         ddb[n] = 0.25 - (theta[n]-0.5)^2;
-        PointPosteriors[n] = exp( bernoulli_log( N[n], theta[n] ) );
+        PointPosteriors[n] = exp( bernoulli_lpmf( N[n], theta[n] ) );
     }
 }

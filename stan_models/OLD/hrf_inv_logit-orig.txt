@@ -1,0 +1,109 @@
+data {
+    
+    // Metadata
+    int n_acq;                             // Number of acquisitions
+    int n_subj;                            // Number of subjects
+    int n_nuisance;                        // Number of nuisance regressors
+    int n_hrf;                             // HRF length (in sec)
+    int n_box;                             // Length of boxcar regressor
+    
+    // HRF parameters.
+    real<upper=1> k;                       // scaling constant
+    real tHRF[n_hrf];                      // HRF times (in sec)
+    int ix[n_acq];                         // Downsampling indices (see below)
+
+    // Observed data
+    row_vector[n_acq]        Y[n_subj];    // BOLD data
+    matrix[n_acq,n_nuisance] Z[n_subj];    // Nuisance regressors
+    vector[n_box]               Boxcar;    // Neural model
+    
+    // DATA NOTE: We assume that the BOLD data are z-scored.
+    
+}
+parameters {
+
+    // HRF Parameters.
+    real<lower=0> D1;                      // gain, 1st inv-logit 
+    real<lower=0> D2;                      // gain, 2nd inv-logit 
+    real<lower=0> D3;                      // gain, 3rd inv-logit 
+    real<lower=0> T1;                      // inflection, 1st inv-logit
+    real<lower = T1 + (D1+D2)*k> T2;       // inflection, 2nd inv-logit
+    real<lower = T2 + (D2+D3)*k> T3;       // inflection, 3rd inv-logit
+    real<lower = 0> a1;                    // height, 1st inv-logit
+    
+    // Regression coefficients.
+    row_vector[n_nuisance] gamma[n_subj];  // nuisance scalings
+    real<lower = 0> sigma;                 // variance
+    
+}
+transformed parameters {
+
+    
+    //------------------------------------------------//
+    // Generating HRF
+    //------------------------------------------------//
+
+    real<upper = 0> a2;                    // height, 2nd inv-logit
+    real<lower = 0> a3;                    // height, 3rd inv-logit
+    
+    a2 = a1 * ( inv_logit(-T3)/D3 - inv_logit(-T1)/D1 ) / ( inv_logit(-T3)/D3 + inv_logit(-T2/D2) );
+    a3 = fabs(a2) - fabs(a1);
+    
+}
+model {
+
+    //------------------------------------------------//
+    // Generated data
+    //------------------------------------------------//
+    
+    // Initialize convolution
+    vector[n_box+n_hrf] BOLD;
+    vector[n_acq] X;
+    vector[n_hrf] HRF;
+
+    //------------------------------------------------//
+    // Priors
+    //------------------------------------------------//
+
+    // Priors on HRF (http://web.mit.edu/seven/src/AFNI/matlab/spm_hrf.m)
+    D1 ~ gamma(2,2);
+    D2 ~ gamma(2,2);
+    D3 ~ gamma(2,2);
+    T1 ~ normal(3,2);
+    T2 ~ normal(11,2);
+    T3 ~ normal(24,2);
+    a1 ~ gamma(2,2);
+
+    // Priors on regression
+    for (n in 1:n_subj){
+        gamma[n] ~ normal(0,2);
+    }
+    sigma ~ gamma(2,2);
+
+    //------------------------------------------------//
+    // Convolution
+    //------------------------------------------------//
+
+    // Construct HRF waveform.
+    for (t in 1:n_hrf){
+        HRF[t] = a1*inv_logit((tHRF[n_hrf]-T1)/D1) + a2*inv_logit((tHRF[n_hrf]-T2)/D2) + a3*inv_logit((tHRF[n_hrf]-T3)/D3);
+    }
+
+    // Perform convolution
+    BOLD = rep_vector(0, n_box+n_hrf);
+    for (t in 1:(n_box)){
+        BOLD[t:(t+n_hrf-1)] = BOLD[t:(t+n_hrf-1)] + HRF * Boxcar[t];
+    }
+    
+    // Downsample
+    X = BOLD[ix];
+
+    //------------------------------------------------//
+    // Model
+    //------------------------------------------------//
+
+    for (n in 1:n_subj){
+        Y[n] ~ normal( X + rows_dot_product( Z[n], rep_matrix(gamma[n], n_acq) ), sigma); 
+    }
+
+}

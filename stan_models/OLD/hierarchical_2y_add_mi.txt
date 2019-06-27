@@ -1,0 +1,71 @@
+data {
+    int n_obs;          // observations
+    int n_subj;         // subjects
+    int n_miss;         // missing observations
+    int ix[n_obs];      // subject ix
+    int mi[n_obs];      // missing ix
+    int N[n_obs];       // choices
+    real Z[n_obs];      // reaction times
+    vector[4] X[n_obs]; // predictors (risk, reward)
+    int nu;             // degrees of freedom
+}
+parameters {
+    row_vector[2] alpha[n_subj];  // [RT at conflict, Modulation from RT at conflict]
+    real<lower=0> aSig[n_subj];   // subject variance
+    row_vector[4] beta[n_subj];   // Low risk (offset), med risk, high risk, reward
+    
+    real alpha_mu[2];             // population-level alpha params
+    real<lower=0> aSig_mu[2];     // population-level variance on alpha
+    real beta_mu[4];              // population-level beta params
+    real<lower=0> bSig_mu[4];     // population-level variance on beta
+    real Zm[n_miss];              // Missing RT
+}
+model {
+
+    // Model-generated data
+    real theta[n_obs];            // likelihood of take
+    vector[2] ddb[n_obs];         // distance from decision boundary
+    
+    // Priors
+    alpha_mu ~ normal(0,2);       // reaction times z-scored
+    aSig_mu ~ gamma(1,2);        
+
+    beta_mu ~ student_t(nu, 0, 2); 
+    bSig_mu ~ gamma(1,2);
+    
+    aSig ~ gamma(1,2);         
+    for (i in 1:n_subj){
+        alpha[i,1] ~ normal(alpha_mu[1], aSig_mu[1]);
+        alpha[i,2] ~ normal(alpha_mu[2], aSig_mu[2]);
+        beta[i,1] ~ student_t(nu, beta_mu[1], bSig_mu[1]); 
+        beta[i,2] ~ student_t(nu, beta_mu[2], bSig_mu[2]); 
+        beta[i,3] ~ student_t(nu, beta_mu[3], bSig_mu[3]); 
+        beta[i,4] ~ student_t(nu, beta_mu[4], bSig_mu[4]); 
+    }
+    
+    // Likelihood
+    for (n in 1:n_obs){
+        theta[n] = inv_logit( dot_product( X[n], beta[ix[n]] ) );
+        ddb[n,1] = 1;
+        ddb[n,2] = 0.25 - (theta[n]-0.5)^2;
+        N[n] ~ bernoulli( theta[n] );
+        if (mi[n] == 0){ 
+            Z[n] ~ normal( dot_product( ddb[n], alpha[ix[n]] ), aSig[ix[n]] );
+        }
+        else {
+            Zm[mi[n]] ~ normal( dot_product( ddb[n], alpha[ix[n]] ), aSig[ix[n]] );
+        }
+    }   
+}
+generated quantities {
+    
+    vector[n_obs] theta; 
+    vector[n_obs] ddb; 
+    vector[n_obs] PointPosteriors; // vector for computing log pointwise predictive density
+    
+    for (n in 1:n_obs){
+        theta[n] = inv_logit( dot_product( X[n], beta[ix[n]] ) );
+        ddb[n] = 0.25 - (theta[n]-0.5)^2;
+        PointPosteriors[n] = exp( bernoulli_log( N[n], theta[n] ) );
+    }
+}

@@ -1,0 +1,31 @@
+data {
+    int n_obs;             // observations
+    int N[n_obs];          // choices
+    vector[4] X[n_obs];    // predictors (risk, reward)
+    int nu;                // degrees of freedom
+}
+parameters {
+    row_vector[4] beta_mu; // population-level beta params
+}
+model {
+    
+    // Priors
+    beta_mu ~ student_t(nu, 0, 2); 
+    
+    // Likelihood
+    for (n in 1:n_obs){
+        N[n] ~ bernoulli_logit( dot_product( X[n], beta_mu ) );
+    }   
+}
+generated quantities {
+    
+    vector[n_obs] theta; 
+    vector[n_obs] ddb; 
+    vector[n_obs] PointPosteriors; // vector for computing log pointwise predictive density
+    
+    for (n in 1:n_obs){
+        theta[n] = inv_logit( dot_product( X[n], beta_mu ) );
+        ddb[n] = 0.25 - (theta[n]-0.5)^2;
+        PointPosteriors[n] = exp( bernoulli_log( N[n], theta[n] ) );
+    }
+}

@@ -1,0 +1,1 @@
+-taskreg Version20190416.hierarchical.All.FixedEpochs.Control.par 1 -taskreg Version20190416.hierarchical.All.FixedEpochs.DDB.par 1 -taskreg Version20190416.hierarchical.All.FixedEpochs.Risk.par 1 -taskreg Version20190416.hierarchical.All.FixedEpochs.Reward.par 1 

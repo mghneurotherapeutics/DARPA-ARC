@@ -1,0 +1,100 @@
+data {
+    
+    // Metadata
+    int n_acq;                             // Number of acquisitions
+    int n_subj;                            // Number of subjects
+    int n_hrf;                             // HRF length (in sec)
+    int n_box;                             // Length of boxcar regressor
+    
+    // HRF parameters.
+    real<upper=1> k;                       // scaling constant
+    real tHRF[n_hrf];                      // HRF times (in sec)
+    int ix[n_acq];                         // Downsampling indices (see below)
+
+    // Observed data
+    row_vector[n_acq]        Y[n_subj];    // BOLD data
+    vector[n_box]               Boxcar;    // Neural model
+    
+    // DATA NOTE: We assume that the BOLD data are z-scored.
+    
+}
+parameters {
+
+    // HRF Parameters.
+    real<lower=0> D1;                      // gain, 1st inv-logit 
+    real<lower=0> D2;                      // gain, 2nd inv-logit 
+    real<lower=0> D3;                      // gain, 3rd inv-logit 
+    real<lower=0> T1;                      // inflection, 1st inv-logit
+    real<lower = T1 + (D1+D2)*k> T2;       // inflection, 2nd inv-logit
+    real<lower = T2 + (D2+D3)*k> T3;       // inflection, 3rd inv-logit
+    
+    // Regression coefficients.
+    real beta;
+    real<lower = 0> sigma;                 // variance
+}
+transformed parameters {
+    
+    // Initialize convolution
+    real a2;                    // height, 3rd inv-logit
+    real a3;                    // height, 3rd inv-logit
+    vector[n_box] BOLD;
+    vector[n_acq] X;
+    vector[n_hrf] HRF;
+    
+    //------------------------------------------------//
+    // Generating HRF
+    //------------------------------------------------//
+    
+    a2 = (inv_logit(-T3/D3) - inv_logit(-T1/D1)) / (inv_logit(-T3/D3) + inv_logit(-T2/D2));
+    a3 = 1 - a2;
+
+    // Construct HRF waveform.
+    for (t in 1:n_hrf){
+        HRF[t] = inv_logit((tHRF[t]-T1)/D1) + a2*inv_logit((tHRF[t]-T2)/D2) + a3*inv_logit((tHRF[t]-T3)/D3);
+    }
+
+    //------------------------------------------------//
+    // Convolution
+    //------------------------------------------------//
+
+    // Perform convolution
+    BOLD = rep_vector(0, n_box);
+    for (n in 1:n_box){
+        int j;
+        j = min(n,n_hrf);
+        for (m in 1:j){
+            BOLD[n] = BOLD[n] + HRF[m] * Boxcar[n-m+1];
+        }
+    }
+    
+    // Downsample
+    X = BOLD[ix];
+    
+}
+model {
+
+    //------------------------------------------------//
+    // Priors
+    //------------------------------------------------//
+
+    // Priors on HRF (http://web.mit.edu/seven/src/AFNI/matlab/spm_hrf.m)
+    D1 ~ normal(1,0.001);
+    D2 ~ normal(2,0.001);
+    D3 ~ normal(1,0.001);
+    T1 ~ normal(6,3);
+    T2 ~ normal(10,3);
+    T3 ~ normal(15,3);
+
+    // Priors on regression
+    beta ~ normal(0,1);
+    sigma ~ gamma(2,2);
+
+    //------------------------------------------------//
+    // Model
+    //------------------------------------------------//
+
+    for (n in 1:n_subj){
+        Y[n] ~ normal( beta * X, sigma ); 
+    }
+
+}
